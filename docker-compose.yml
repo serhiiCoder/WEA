@@ -1,0 +1,58 @@
+services:
+  db:
+    image: mysql:8.0
+    container_name: mysql-compose-container
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "50001:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - my_network
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    ports:
+      - "10001:80"
+    environment:
+      PMA_HOST: mysql-compose-container
+      PMA_USER: ${MYSQL_USER}
+      PMA_PASSWORD: ${MYSQL_PASSWORD}
+    networks:
+      - my_network
+
+  frontend:
+    image: nginx:latest
+    ports:
+      - "3001:80"
+    volumes:
+      - ./frontend:/usr/share/nginx/html
+    networks:
+      - my_network
+
+  backend:
+    container_name: sk02-web
+    build: ./backend
+    ports:
+      - "8001:5000"
+    volumes:
+      - /home/cerny/logs/sk02:/app/logs
+    networks:
+      - cdb-network
+      - my_network
+
+volumes:
+  db_data:
+
+networks:
+  my_network:
+    driver: bridge
+  cdb-network:
+    name: cdb-network
+    external: true
+    driver: bridge
